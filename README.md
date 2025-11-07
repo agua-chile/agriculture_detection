@@ -130,4 +130,4 @@ For questions or issues:
 
 ---
 
-*Project for the AI Capstone with Deep Learning on Coursera*
+*Built using Keras, TensorFlow, and PyTorch*
