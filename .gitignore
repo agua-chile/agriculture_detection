@@ -1,0 +1,60 @@
+# Environment variables (will ignore .env anywhere in project)
+.env
+*.env
+
+# Virtual environments (will ignore these folders anywhere)
+.venv/
+venv/
+env/.venv/
+
+# Python cache
+__pycache__/
+utils/__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# ChromaDB
+chroma_db/
+
+# Python distribution/packaging
+build/
+dist/
+*.egg-info/
+.installed.cfg
+
+# Jupyter Notebook (if you use them)
+.ipynb_checkpoints
+
+# pytest cache
+.pytest_cache/
+
+# Coverage reports (if you add testing)
+htmlcov/
+.coverage
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Scripts
+update.sh
+
+# Data
+data/
+
+# Models
+models/
