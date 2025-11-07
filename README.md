@@ -5,7 +5,7 @@ A Python project that uses deep learning models (Keras and PyTorch) to classify 
 ## Author
 
 **Agua Chile**
-- GitHub: [@aguachile](https://github.com/aguachile)
+- GitHub: [@agua_chile](https://github.com/aguachile)
 - Project: agriculture_detection
 
 ## Acknowledgements
