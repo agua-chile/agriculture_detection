@@ -11,6 +11,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, BatchNormalization, Dropout, GlobalAveragePooling2D
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.regularizers import l2
 
 # local imports
 from utils.main_utils import (
@@ -34,7 +35,8 @@ def build_keras_model(
         hidden_activation='relu', 
         padding='same', 
         strides=(1, 1), 
-        kernel_size=(3, 3), 
+        kernel_size=(3, 3),
+        kernel_regularizer=l2(0.001),
         img_w=64, 
         img_h=64, 
         n_channels=3,
@@ -75,6 +77,7 @@ def build_keras_model(
                     padding=padding,                        # padding type (e.g., 'same')
                     strides=strides,                        # stride for convolution (e.g., (1, 1))
                     kernel_initializer=kernel_initializer,  # kernel initializer (e.g., HeUniform)
+                    kernel_regularizer=kernel_regularizer,  # L2 regularization to prevent overfitting (e.g., 0.001)
                     input_shape=input_shape                 # input shape for the first layer (e.g., 64x64 RGB images has 3 channels)
                 )                                           
             )
@@ -97,7 +100,8 @@ def build_keras_model(
             model.add(                                          # fully connected blocks 1-n: dense layers with increasing neurons and regularization
                 Dense(
                     units=unit_base // (2 ** dense_block),      # number of neurons in dense layer (decreased to unit_base / (2 ** dense_block))
-                    kernel_initializer=kernel_initializer       # kernel initializer (e.g., HeUniform)
+                    kernel_initializer=kernel_initializer,      # kernel initializer (e.g., HeUniform)
+                    kernel_regularizer=kernel_regularizer       # L2 regularization to prevent overfitting (e.g., 0.001)
                 )
             )
             
