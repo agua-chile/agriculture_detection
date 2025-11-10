@@ -63,13 +63,16 @@ def build_keras_model(
         # initialize the Sequential model
         model = Sequential()
 
+        # add input layer
+        model.add(tf.keras.Input(shape=(                    # input layer: specify input shape
+            img_w,                                          # image width (e.g., 64)
+            img_h,                                          # image height (e.g., 64)
+            n_channels                                      # number of channels (e.g., 3 for RGB)
+            )))
+
         # add convolutional blocks
         for conv_block in range(conv_block_num):
             filters = filter_base * (2 ** conv_block)
-            if conv_block == 0:
-                input_shape=(img_w, img_h, n_channels)
-            else:
-                input_shape=None
             model.add(                                      # convolutional block 1: initial feature extraction
                 Conv2D(
                     filters=filters,                        # number of filters for initial feature extraction (e.g., 32)
@@ -78,7 +81,6 @@ def build_keras_model(
                     strides=strides,                        # stride for convolution (e.g., (1, 1))
                     kernel_initializer=kernel_initializer,  # kernel initializer (e.g., HeUniform)
                     kernel_regularizer=kernel_regularizer,  # L2 regularization to prevent overfitting (e.g., 0.001)
-                    input_shape=input_shape                 # input shape for the first layer (e.g., 64x64 RGB images has 3 channels)
                 )                                           
             )
             model.add(BatchNormalization())                     # BatchNormalization: normalize outputs to stabilize training
