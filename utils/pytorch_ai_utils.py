@@ -4,7 +4,7 @@ import os
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
+from PIL import Image, ImageDraw
 from tqdm import tqdm
 import torch
 import torch.nn as nn
@@ -119,8 +119,8 @@ def create_pytorch_custom_dataset(base_dir, dir_non_agri, dir_agri, batch_size=8
     try:
         print('Creating PyTorch datasets...')
         imagefolder_dataset = datasets.ImageFolder(root=base_dir, transform=custom_pytorch_transform())
-        print(f"Classes found by ImageFolder: {imagefolder_dataset.classes}")
-        print(f"Class to index mapping: {imagefolder_dataset.class_to_idx}")
+        print(f'Classes found by ImageFolder: {imagefolder_dataset.classes}')
+        print(f'Class to index mapping: {imagefolder_dataset.class_to_idx}')
 
         # --- using your custom dataset ---
         custom_dataset = CustomBinaryClassDataset(dir_non_agri, dir_agri, transform=custom_pytorch_transform())
@@ -135,8 +135,8 @@ def create_pytorch_dataset(base_dir, batch_size=8):
     try:
         print('Creating PyTorch datasets...')
         imagefolder_dataset = datasets.ImageFolder(root=base_dir, transform=custom_pytorch_transform())
-        print(f"Classes found by ImageFolder: {imagefolder_dataset.classes}")
-        print(f"Class to index mapping: {imagefolder_dataset.class_to_idx}")
+        print(f'Classes found by ImageFolder: {imagefolder_dataset.classes}')
+        print(f'Class to index mapping: {imagefolder_dataset.class_to_idx}')
 
         # --- using the imagefolder dataset ---
         imagefolder_loader = DataLoader(imagefolder_dataset, batch_size=batch_size, shuffle=True, num_workers=0)  # changed num_workers to 0 for compatibility
@@ -426,6 +426,95 @@ def set_pytorch_seed(seed_value):
         torch.backends.cudnn.benchmark = False
     except Exception as e:
         handle_error(e, def_name='set_pytorch_seed')
+
+def visualize_satellite_agriculture(
+        model,
+        dir_non_agri,
+        dir_agri,
+        device,
+        grid_size=4,
+        tile_size=64,
+        save_path=None
+    ):
+    try:
+        print('Generating agricultural tile grid visualization...')
+
+        # ensure save_path is provided
+        if save_path is None:
+            raise ValueError('save_path must not be None. Provide a valid output file path.')
+
+        # ensure save_path is an image file
+        valid_ext = ('.png', '.jpg', '.jpeg')
+        if not save_path.lower().endswith(valid_ext):
+            print(f'[WARNING] The provided save_path "{save_path}" is not an image file.')
+            print('          Automatically converting output to PNG format...')
+            save_path = save_path + '.png'
+
+        # collect image paths
+        non_agri_files = []
+        for f in os.listdir(dir_non_agri):
+            non_agri_files.append(os.path.join(dir_non_agri, f))
+        agri_files = []
+        for f in os.listdir(dir_agri):
+            agri_files.append(os.path.join(dir_agri, f))
+
+        # combine and shuffle
+        all_files = non_agri_files + agri_files
+        random.shuffle(all_files)
+
+        # pick N tiles for the grid
+        num_tiles = grid_size * grid_size
+        chosen_files = all_files[:num_tiles]
+
+        # preprocessing pipeline
+        preprocess = transforms.Compose([
+            transforms.Resize((tile_size, tile_size)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], 
+                                 [0.229, 0.224, 0.225])
+        ])
+
+        model.eval()
+
+        # create output grid canvas
+        canvas_size = grid_size * tile_size
+        grid_img = Image.new('RGB', (canvas_size, canvas_size), color=(255, 255, 255))
+        draw = ImageDraw.Draw(grid_img)
+
+        # loop over tiles and classify each
+        index = 0
+        for row in range(grid_size):
+            for col in range(grid_size):
+                img_path = chosen_files[index]
+                index += 1
+                tile = Image.open(img_path).convert('RGB')
+                tile_tensor = preprocess(tile).unsqueeze(0).to(device)
+
+                # predict
+                with torch.no_grad():
+                    output = model(tile_tensor)
+                    prob = torch.softmax(output, dim=1)[0, 1].item()
+                    label = 'AGRI' if prob >= 0.5 else 'NON-AGRI'
+
+                # paste tile into grid
+                x = col * tile_size
+                y = row * tile_size
+                grid_img.paste(tile, (x, y))
+
+                # draw label background (green for agri)
+                if prob >= 0.5:
+                    color = (0, 200, 0)   # green
+                else:
+                    color = (200, 0, 0)   # red
+
+                draw.rectangle([x, y, x + tile_size, y + 20], fill=color)
+                draw.text((x + 4, y + 2), f'{label} {prob:.2f}', fill=(255, 255, 255))
+        # save final grid
+        grid_img.save(save_path)
+        print(f'Tile grid saved to: {save_path}')
+        return grid_img
+    except Exception as e:
+        handle_error(e, def_name='visualize_satellite_agriculture')
 
 
 def worker_init_fn(worker_id, seed):

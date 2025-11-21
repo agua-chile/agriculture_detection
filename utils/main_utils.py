@@ -1,5 +1,6 @@
 # import libraries
 import os
+import random
 import tarfile
 import httpx
 from pathlib import Path
@@ -126,6 +127,35 @@ def get_file_names(dataset_path):
         return fnames
     except Exception as e:
         handle_error(e, def_name='get_file_names')
+
+
+def get_random_sample_image(dir_non_agri, dir_agri):
+    try:
+        print('Selecting a random image from dataset...')
+
+        # collect all image file paths
+        non_agri_files = []
+        for f in os.listdir(dir_non_agri):
+            non_agri_files.append(os.path.join(dir_non_agri, f))
+        agri_files = []
+        for f in os.listdir(dir_agri):
+            agri_files.append(os.path.join(dir_agri, f))
+
+        all_files = non_agri_files + agri_files
+
+        if len(all_files) == 0:
+            raise FileNotFoundError("No images found in the provided directories.")
+
+        # choose one random image path
+        chosen_image = random.choice(all_files)
+
+        print(f'Random sample selected: {chosen_image}')
+        return chosen_image
+
+    except Exception as e:
+        handle_error(e, def_name='get_random_sample_image')
+
+
 
 
 def handle_error(exc, def_name, msg=''):
